@@ -14,9 +14,12 @@ do
 	fi
 	cp minhook_1.3.3/bin/${min_hook_lib}.dll $OUT_DIR
 
+	CC=${arch}-w64-mingw32-gcc
 	CPPC=${arch}-w64-mingw32-g++
-	$CPPC -g -fPIC -c main.cpp -Iminhook_1.3.3/include -Ijson_hpp -std=c++20 -o $OUT_DIR/main.o -O0
-	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.asi $OUT_DIR/main.o -Lminhook_1.3.3/bin -lntdll -ldinput8 -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
+	$CPPC -g -fPIC -c main.cpp  -Ijson_hpp -std=c++20 -o $OUT_DIR/main.o -O0
+	$CC -g -fPIC -c logging.c -Iminhook_1.3.3/include -o $OUT_DIR/logging.o
+	$CC -g -fPIC -c hooking.c -Iminhook_1.3.3/include -o $OUT_DIR/hooking.o
+	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.asi $OUT_DIR/logging.o $OUT_DIR/hooking.o $OUT_DIR/main.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldinput8 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
 
 	rm $OUT_DIR/*.o
 
