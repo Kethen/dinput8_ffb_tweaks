@@ -32,16 +32,16 @@ void common_download_hook(LPDIRECTINPUTEFFECT object){
 
 }
 
-HRESULT (__attribute__((thiscall)) *DownloadA_orig)(LPDIRECTINPUTEFFECT object);
-HRESULT __attribute__((thiscall)) DownloadA_patched(LPDIRECTINPUTEFFECT object){
+HRESULT (__attribute__((stdcall)) *DownloadA_orig)(LPDIRECTINPUTEFFECT object);
+HRESULT __attribute__((stdcall)) DownloadA_patched(LPDIRECTINPUTEFFECT object){
 	LOG_VERBOSE("%s: object 0x%08x\n", __func__, object);
 	common_download_hook(object);
 	HRESULT ret = DownloadA_orig(object);
 	return ret;
 }
 
-HRESULT (__attribute__((thiscall)) *CreateEffectA_orig)(LPDIRECTINPUTDEVICE8A object, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
-HRESULT __attribute__((thiscall)) CreateEffectA_patched(LPDIRECTINPUTDEVICE8A object, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter){
+HRESULT (__attribute__((stdcall)) *CreateEffectA_orig)(LPDIRECTINPUTDEVICE8A object, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+HRESULT __attribute__((stdcall)) CreateEffectA_patched(LPDIRECTINPUTDEVICE8A object, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter){
 	LOG_VERBOSE("%s: object 0x%08x, rguid 0x%08x\n", __func__, object, rguid);
 	HRESULT ret = CreateEffectA_orig(object, rguid, lpeff, ppdeff, punkOuter);
 	static bool hooked = false;
@@ -60,13 +60,13 @@ HRESULT __attribute__((thiscall)) CreateEffectA_patched(LPDIRECTINPUTDEVICE8A ob
 			LOG("Failed enableing hook for DownloadA, %d\n", ret);
 			return ret;
 		}
-		LOG_VERBOSE("hooked CreateDeviceA\n");
+		LOG_VERBOSE("hooked DownloadA at 0x%08x\n", (*ppdeff)->lpVtbl->Download);
 	}
 	return ret;
 }
 
-HRESULT (__attribute__((thiscall)) *CreateDeviceA_orig)(LPDIRECTINPUT8A object, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
-HRESULT __attribute__((thiscall)) CreateDeviceA_patched(LPDIRECTINPUT8A object, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter){
+HRESULT (__attribute__((stdcall)) *CreateDeviceA_orig)(LPDIRECTINPUT8A object, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+HRESULT __attribute__((stdcall)) CreateDeviceA_patched(LPDIRECTINPUT8A object, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter){
 	LOG_VERBOSE("%s: object 0x%08x, rguid 0x%08x\n", __func__, object, rguid);
 	HRESULT ret = CreateDeviceA_orig(object, rguid, lplpDirectInputDevice, pUnkOuter);
 	static bool hooked = false;
@@ -85,7 +85,7 @@ HRESULT __attribute__((thiscall)) CreateDeviceA_patched(LPDIRECTINPUT8A object, 
 			LOG("Failed enableing hook for CreateEffectA, %d\n", ret);
 			return ret;
 		}
-		LOG_VERBOSE("hooked CreateDeviceA\n");
+		LOG_VERBOSE("hooked CreateEffectA at 0x%08x\n", (*lplpDirectInputDevice)->lpVtbl->CreateEffect);
 	}
 	return ret;
 }
@@ -113,7 +113,7 @@ HRESULT WINAPI DirectInput8Create_patched(HINSTANCE instance, DWORD version, REF
 				LOG("Failed enableing hook for CreateDeviceA, %d\n", ret);
 				return ret;
 			}
-			LOG_VERBOSE("hooked CreateDeviceA\n");
+			LOG_VERBOSE("hooked CreateDeviceA at 0x%08x\n", dinput8_interface_A->lpVtbl->CreateDevice);
 		}else{
 			// W variant
 			LOG_VERBOSE("CreateDeviceW wip\n");
@@ -159,6 +159,6 @@ int hook_functions(){
 		return -1;
 	}
 	LOG_VERBOSE("hooked DirectInput8Create at 0x%08x\n", DirectInput8Create_ref);
-	//sleep(100000);
+	//sleep(10);
 	return 0;
 }
