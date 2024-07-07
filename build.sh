@@ -1,0 +1,26 @@
+set -xe
+
+#for arch in x86_64 i686
+for arch in i686
+do
+	OUT_DIR=dist/${arch}
+	rm -rf $OUT_DIR
+	mkdir -p $OUT_DIR
+
+	min_hook_lib="MinHook.x86"
+	if [ ${arch} == x86_64 ]
+	then
+		min_hook_lib="MinHook.x64"
+	fi
+	cp minhook_1.3.3/bin/${min_hook_lib}.dll $OUT_DIR
+
+	CPPC=${arch}-w64-mingw32-g++
+	$CPPC -g -fPIC -c main.cpp -Iminhook_1.3.3/include -Ijson_hpp -std=c++20 -o $OUT_DIR/main.o -O0
+	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.asi $OUT_DIR/main.o -Lminhook_1.3.3/bin -lntdll -ldinput8 -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
+
+	rm $OUT_DIR/*.o
+
+	cp dinput8_ffb_tweaks_config.json $OUT_DIR/
+	cp ultimate_asi_loader/dinput8.dll $OUT_DIR/
+done
+

@@ -1,0 +1,10 @@
+{
+	"modifiers":{
+		"spring":{
+			"min_gain":0
+		},
+		"friction":{
+			"min_gain":0
+		}
+	}
+}
