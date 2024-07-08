@@ -1,54 +1,25 @@
-#include <windows.h>
-
-// pthread
-#include <pthread.h>
-
-// unix-ish
-#include <fcntl.h>
-#include <unistd.h>
-
-// std
-#include <stdio.h>
-#include <stdint.h>
-
-// windows
-#include <memoryapi.h>
-
 // json
 #include <json.hpp>
 
-// dinput
-#define CINTERFACE
-#include <dinput.h>
-#undef CINTERFACE
+// unix-ish
+#include <fcntl.h>
+
+#include "logging.h"
+
+#define __NOEXTERN
+#include "config.h"
+#undef __NOEXTERN
+
+#include <pthread.h>
 
 #define STR(s) #s
 
-#include "hooking.h"
-#include "logging.h"
-
 using json = nlohmann::json;
-
-struct modifier {
-	// not sure what else to modify yet
-	int32_t min_gain;
-	float gain_multiplier;
-};
-
-struct modifiers {
-	// effects to modify, adding more based on time availability
-	struct modifier spring;
-	struct modifier friction;
-};
-
-struct config{
-	struct modifiers m;
-};
 
 struct config current_config = {0};
 pthread_mutex_t current_config_mutex;
 
-void log_config(struct config *c){
+static void log_config(struct config *c){
 	#define PRINT_SETTING_BOOL(key) { \
 		LOG("setting " STR(key) ": %s\n", c->key? "true" : "false");\
 	}
@@ -70,6 +41,7 @@ void log_config(struct config *c){
 	#undef PRINT_MODIFIER_INT32
 	#undef PRINT_MODIFIERS
 }
+
 
 void parse_config(){
 	const char *config_path = "./dinput8_ffb_tweaks_config.json";
@@ -181,38 +153,6 @@ void parse_config(){
 	close(config_fd);
 }
 
-
-void patch_memory(void *location, void *buffer, int len){
-	DWORD orig_protect;
-	VirtualProtect(location, len, PAGE_EXECUTE_READWRITE, &orig_protect);
-	memcpy(location, buffer, len);
-	DWORD dummy;
-	VirtualProtect(location, len, orig_protect, &dummy);
-}
-
-void *config_parser_loop(void *args){
-	while(true){
-		sleep(2);
-		parse_config();
-	}
-	return NULL;
-}
-
-// entrypoint
-__attribute__((constructor))
-int init(){
-	init_logging();
-	LOG("log initialized\n");
-
-	pthread_mutex_init(&current_config_mutex, NULL);
-	parse_config();
-	LOG("done parsing initial config\n");
-
-	hook_functions();
-	LOG("done hooking functions\n");
-
-	pthread_t config_reparse_thread;
-	pthread_create(&config_reparse_thread, NULL, config_parser_loop, NULL);
-
-	return 0;
+int init_config(){
+	return pthread_mutex_init(&current_config_mutex, NULL);
 }
