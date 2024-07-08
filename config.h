@@ -2,6 +2,7 @@
 #define __CONFIG_H
 
 #include <pthread.h>
+#include <stdint.h>
 
 struct modifier {
 	// not sure what else to modify yet

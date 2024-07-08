@@ -16,16 +16,19 @@ do
 
 	CC=${arch}-w64-mingw32-gcc
 	CPPC=${arch}-w64-mingw32-g++
-	$CPPC -g -fPIC -c asi_mode.cpp -std=c++20 -o $OUT_DIR/asi_mode.o -O0
+	$CPPC -g -fPIC -c asi_mode.cpp -std=c++20 -o $OUT_DIR/asi_mode.o
+	$CPPC -g -fPIC -c wrapper_mode.cpp -std=c++20 -o $OUT_DIR/wrapper_mode.o
 	$CC -g -fPIC -c logging.c -o $OUT_DIR/logging.o
-	$CC -g -fPIC -c hooking.c -Iminhook_1.3.3/include -o $OUT_DIR/hooking.o
+	$CC -g -fPIC -c hooking.c -Iminhook_1.3.3/include -o $OUT_DIR/hooking.o -O0
 	$CPPC -g -fPIC -c config.cpp -Ijson_hpp -o $OUT_DIR/config.o
 
 	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.asi $OUT_DIR/logging.o $OUT_DIR/hooking.o $OUT_DIR/config.o $OUT_DIR/asi_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
+	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.dll $OUT_DIR/logging.o $OUT_DIR/hooking.o $OUT_DIR/config.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
+	#$CPPC -g -shared -o $OUT_DIR/dinput8.dll $OUT_DIR/logging.o $OUT_DIR/hooking.o $OUT_DIR/config.o $OUT_DIR/wrapper_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
 
 	rm $OUT_DIR/*.o
 
 	cp dinput8_ffb_tweaks_config.json $OUT_DIR/
-	cp ultimate_asi_loader/dinput8.dll $OUT_DIR/
+	cp ultimate_asi_loader/dinput8.dll $OUT_DIR/d3d9.dll
 done
 
