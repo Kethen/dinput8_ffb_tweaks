@@ -21,10 +21,12 @@ do
 	$CC -g -fPIC -c logging.c -o $OUT_DIR/logging.o
 	$CC -g -fPIC -c hooking.c -Iminhook_1.3.3/include -o $OUT_DIR/hooking.o -O0
 	$CPPC -g -fPIC -c config.cpp -Ijson_hpp -o $OUT_DIR/config.o
+	$CPPC -g -fPIC -c modify_effects.cpp -o $OUT_DIR/modify_effects.o
 
-	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.asi $OUT_DIR/logging.o $OUT_DIR/hooking.o $OUT_DIR/config.o $OUT_DIR/asi_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
-	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.dll $OUT_DIR/logging.o $OUT_DIR/hooking.o $OUT_DIR/config.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
-	#$CPPC -g -shared -o $OUT_DIR/dinput8.dll $OUT_DIR/logging.o $OUT_DIR/hooking.o $OUT_DIR/config.o $OUT_DIR/wrapper_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
+	obj_list="$OUT_DIR/logging.o $OUT_DIR/hooking.o $OUT_DIR/config.o $OUT_DIR/modify_effects.o"
+	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.asi $obj_list $OUT_DIR/asi_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
+	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.dll $obj_list -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
+	#$CPPC -g -shared -o $OUT_DIR/dinput8.dll $obj_list $OUT_DIR/wrapper_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
 
 	rm $OUT_DIR/*.o
 

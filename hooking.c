@@ -16,7 +16,7 @@
 #include <unistd.h>
 
 #include "logging.h"
-
+#include "modify_effects.h"
 
 bool guid_equal(const void *lhs, const void *rhs){
 	return memcmp(lhs, rhs, sizeof(GUID)) == 0;
@@ -29,7 +29,12 @@ bool guid_equal(const void *lhs, const void *rhs){
 // step 5, on Download, fire hook over at cpp bits with access to config
 
 void common_download_hook(LPDIRECTINPUTEFFECT object){
-
+	GUID effect;
+	DIEFFECT params;
+	object->lpVtbl->GetEffectGuid(object, &effect);
+	object->lpVtbl->GetParameters(object, &params, DIEP_ALLPARAMS);
+	modify_effects(&effect, &params);
+	object->lpVtbl->SetParameters(object, &params, DIEP_ALLPARAMS);
 }
 
 HRESULT (__attribute__((stdcall)) *DownloadA_orig)(LPDIRECTINPUTEFFECT object);
