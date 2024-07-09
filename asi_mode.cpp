@@ -34,7 +34,7 @@ void patch_memory(void *location, void *buffer, int len){
 void *config_parser_loop(void *args){
 	while(true){
 		sleep(2);
-		parse_config();
+		parse_config(true);
 	}
 	return NULL;
 }
@@ -46,7 +46,7 @@ int init(){
 	LOG("log initialized\n");
 
 	init_config();
-	parse_config();
+	parse_config(true);
 	LOG("done parsing initial config\n");
 
 	hook_dinput8create();

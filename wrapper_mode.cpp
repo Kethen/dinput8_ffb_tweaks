@@ -10,7 +10,7 @@
 void *config_parser_loop(void *args){
 	while(true){
 		sleep(2);
-		parse_config();
+		parse_config(true);
 	}
 	return NULL;
 }
@@ -25,7 +25,7 @@ HRESULT WINAPI DirectInput8Create(HINSTANCE instance, DWORD version, REFIID vari
 		LOG("log initialized\n");
 
 		init_config();
-		parse_config();
+		parse_config(true);
 		LOG("done parsing initial config\n");
 
 		pthread_t config_reparse_thread;

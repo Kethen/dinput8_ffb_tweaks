@@ -36,17 +36,21 @@ void common_set_hook(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD *dwFlags
 
 HRESULT (__attribute__((stdcall)) *SetParametersA_orig)(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags) = NULL;
 HRESULT __attribute__((stdcall)) SetParametersA_patched(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags){
+	LOG_VERBOSE("%s: object 0x%08x\n", __func__, object);
 	common_set_hook(object, peff, &dwFlags);
 	return SetParametersA_orig(object, peff, dwFlags);
 }
 
 HRESULT (__attribute__((stdcall)) *SetParametersW_orig)(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags) = NULL;
 HRESULT __attribute__((stdcall)) SetParametersW_patched(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags){
+	LOG_VERBOSE("%s: object 0x%08x\n", __func__, object);
 	common_set_hook(object, peff, &dwFlags);
 	return SetParametersW_orig(object, peff, dwFlags);
 }
 
 void common_download_hook(LPDIRECTINPUTEFFECT object){
+	return;
+	// undecided, some flags could make doing it here funky, might remove
 	GUID effect;
 	DIEFFECT params;
 	DWORD modified_items = DIEP_ALLPARAMS;
@@ -62,7 +66,7 @@ void common_download_hook(LPDIRECTINPUTEFFECT object){
 
 HRESULT (__attribute__((stdcall)) *DownloadA_orig)(LPDIRECTINPUTEFFECT object);
 HRESULT __attribute__((stdcall)) DownloadA_patched(LPDIRECTINPUTEFFECT object){
-	LOG_VERBOSE("%s: object 0x%08x\n", __func__, object);
+	//LOG_VERBOSE("%s: object 0x%08x\n", __func__, object);
 	common_download_hook(object);
 	HRESULT ret = DownloadA_orig(object);
 	return ret;
@@ -70,7 +74,7 @@ HRESULT __attribute__((stdcall)) DownloadA_patched(LPDIRECTINPUTEFFECT object){
 
 HRESULT (__attribute__((stdcall)) *DownloadW_orig)(LPDIRECTINPUTEFFECT object);
 HRESULT __attribute__((stdcall)) DownloadW_patched(LPDIRECTINPUTEFFECT object){
-	LOG_VERBOSE("%s: object 0x%08x\n", __func__, object);
+	//LOG_VERBOSE("%s: object 0x%08x\n", __func__, object);
 	common_download_hook(object);
 	HRESULT ret = DownloadW_orig(object);
 	return ret;

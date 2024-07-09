@@ -23,7 +23,7 @@ static void log_config(struct config *c){
 	#define PRINT_SETTING_BOOL(key) { \
 		LOG("setting " STR(key) ": %s\n", c->key? "true" : "false");\
 	}
-
+	PRINT_SETTING_BOOL(log_effects);
 	#undef PRINT_SETTING_BOOL
 
 	#define PRINT_MODIFIER_INT32(key, subkey) { \
@@ -43,7 +43,7 @@ static void log_config(struct config *c){
 }
 
 
-void parse_config(){
+void parse_config(bool update_if_needed){
 	const char *config_path = "./dinput8_ffb_tweaks_config.json";
 	bool updated = false;
 	json parsed_config;
@@ -107,6 +107,7 @@ void parse_config(){
 			parsed_config[STR(key)] = d; \
 		} \
 	}
+	FETCH_SETTING(log_effects, false);
 	#undef FETCH_SETTING
 
 	#define FETCH_MODIFIER(key, subkey, d) { \
@@ -135,7 +136,7 @@ void parse_config(){
 		log_config(&current_config);
 	}
 
-	if(!updated){
+	if(!updated || !update_if_needed){
 		return;
 	}
 	config_fd = open(config_path, O_BINARY | O_WRONLY | O_TRUNC | O_CREAT);

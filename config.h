@@ -18,9 +18,10 @@ struct modifiers {
 
 struct config{
 	struct modifiers m;
+	bool log_effects;
 };
 
-void parse_config();
+void parse_config(bool update_if_needed);
 int init_config();
 
 #ifndef __NOEXTERN
