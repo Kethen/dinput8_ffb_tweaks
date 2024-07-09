@@ -6,7 +6,8 @@ extern "C" {
 #endif
 
 #include <dinput.h>
-void modify_effects(LPGUID effect_guid, LPDIEFFECT params);
+#include <stdbool.h>
+void modify_effects(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bool download_hook);
 
 #ifdef __cplusplus
 }

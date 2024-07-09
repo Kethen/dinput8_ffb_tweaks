@@ -28,13 +28,36 @@ bool guid_equal(const void *lhs, const void *rhs){
 // step 4, on CreateEffect, hook Download
 // step 5, on Download, fire hook over at cpp bits with access to config
 
+void common_set_hook(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD *dwFlags){
+	GUID effect;
+	object->lpVtbl->GetEffectGuid(object, &effect);
+	modify_effects(&effect, peff, dwFlags, false);
+}
+
+HRESULT (__attribute__((stdcall)) *SetParametersA_orig)(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags) = NULL;
+HRESULT __attribute__((stdcall)) SetParametersA_patched(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags){
+	common_set_hook(object, peff, &dwFlags);
+	return SetParametersA_orig(object, peff, dwFlags);
+}
+
+HRESULT (__attribute__((stdcall)) *SetParametersW_orig)(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags) = NULL;
+HRESULT __attribute__((stdcall)) SetParametersW_patched(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags){
+	common_set_hook(object, peff, &dwFlags);
+	return SetParametersW_orig(object, peff, dwFlags);
+}
+
 void common_download_hook(LPDIRECTINPUTEFFECT object){
 	GUID effect;
 	DIEFFECT params;
+	DWORD modified_items = DIEP_ALLPARAMS;
 	object->lpVtbl->GetEffectGuid(object, &effect);
 	object->lpVtbl->GetParameters(object, &params, DIEP_ALLPARAMS);
-	modify_effects(&effect, &params);
-	object->lpVtbl->SetParameters(object, &params, DIEP_ALLPARAMS);
+	modify_effects(&effect, &params, &modified_items, true);
+	if(SetParametersA_orig != NULL){
+		SetParametersA_orig(object, &params, modified_items | DIEP_NODOWNLOAD);
+	}else{
+		SetParametersW_orig(object, &params, modified_items | DIEP_NODOWNLOAD);
+	}
 }
 
 HRESULT (__attribute__((stdcall)) *DownloadA_orig)(LPDIRECTINPUTEFFECT object);
@@ -53,7 +76,7 @@ HRESULT __attribute__((stdcall)) DownloadW_patched(LPDIRECTINPUTEFFECT object){
 	return ret;
 }
 
-int hook_donwload_A(LPDIRECTINPUTEFFECT ppdeff){
+int hook_download_set_A(LPDIRECTINPUTEFFECT ppdeff){
 	int mhret = MH_CreateHook(ppdeff->lpVtbl->Download, (LPVOID)&DownloadA_patched, (LPVOID *)&DownloadA_orig);
 	if(mhret != MH_OK){
 		LOG("Failed creating hook for DownloadA, %d\n", mhret);
@@ -65,10 +88,23 @@ int hook_donwload_A(LPDIRECTINPUTEFFECT ppdeff){
 		return -1;
 	}
 	LOG_VERBOSE("hooked DownloadA at 0x%08x\n", ppdeff->lpVtbl->Download);
+
+	mhret = MH_CreateHook(ppdeff->lpVtbl->SetParameters, (LPVOID)&SetParametersA_patched, (LPVOID *)&SetParametersA_orig);
+	if(mhret != MH_OK){
+		LOG("Failed creating hook for SetParametersA, %d\n", mhret);
+		return -1;
+	}
+	mhret = MH_EnableHook(ppdeff->lpVtbl->SetParameters);
+	if(mhret != MH_OK){
+		LOG("Failed enableing hook for SetParametersA, %d\n", mhret);
+		return -1;
+	}
+	LOG_VERBOSE("hooked SetParametersA at 0x%08x\n", ppdeff->lpVtbl->SetParameters);
+
 	return 0;
 }
 
-int hook_donwload_W(LPDIRECTINPUTEFFECT ppdeff){
+int hook_download_set_W(LPDIRECTINPUTEFFECT ppdeff){
 	int mhret = MH_CreateHook(ppdeff->lpVtbl->Download, (LPVOID)&DownloadW_patched, (LPVOID *)&DownloadW_orig);
 	if(mhret != MH_OK){
 		LOG("Failed creating hook for DownloadW, %d\n", mhret);
@@ -80,6 +116,19 @@ int hook_donwload_W(LPDIRECTINPUTEFFECT ppdeff){
 		return -1;
 	}
 	LOG_VERBOSE("hooked DownloadW at 0x%08x\n", ppdeff->lpVtbl->Download);
+
+	mhret = MH_CreateHook(ppdeff->lpVtbl->SetParameters, (LPVOID)&SetParametersW_patched, (LPVOID *)&SetParametersW_orig);
+	if(mhret != MH_OK){
+		LOG("Failed creating hook for SetParametersW, %d\n", mhret);
+		return -1;
+	}
+	mhret = MH_EnableHook(ppdeff->lpVtbl->SetParameters);
+	if(mhret != MH_OK){
+		LOG("Failed enableing hook for SetParametersW, %d\n", mhret);
+		return -1;
+	}
+	LOG_VERBOSE("hooked SetParametersW at 0x%08x\n", ppdeff->lpVtbl->SetParameters);
+
 	return 0;
 }
 
@@ -92,7 +141,7 @@ HRESULT __attribute__((stdcall)) CreateEffectA_patched(LPDIRECTINPUTDEVICE8A obj
 		return ret;
 	}
 	if(ret == DI_OK){
-		hooked = hook_donwload_A(*ppdeff) == 0;
+		hooked = hook_download_set_A(*ppdeff) == 0;
 	}
 	return ret;
 }
@@ -106,7 +155,7 @@ HRESULT __attribute__((stdcall)) CreateEffectW_patched(LPDIRECTINPUTDEVICE8W obj
 		return ret;
 	}
 	if(ret == DI_OK){
-		hooked = hook_donwload_W(*ppdeff) == 0;
+		hooked = hook_download_set_W(*ppdeff) == 0;
 	}
 	return ret;
 }
