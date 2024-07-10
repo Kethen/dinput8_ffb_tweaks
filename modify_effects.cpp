@@ -102,23 +102,24 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 
 	if(*modified_items & DIEP_TYPESPECIFICPARAMS && params->lpvTypeSpecificParams != NULL){
 		LOG_IF_LOG_EFFECTS("type specific params:\n");
-		for(int i = 0;i < params->cbTypeSpecificParams;i++){
-			LOG_IF_LOG_EFFECTS("item #%d:\n", i);
-			// condition effects
-			if(
-				*effect_guid == GUID_Spring ||
-				*effect_guid == GUID_Damper ||
-				*effect_guid == GUID_Inertia ||
-				*effect_guid == GUID_Friction
-			){
-				DICONDITION *base_pointer = (DICONDITION *)params->lpvTypeSpecificParams;
+		if(
+			*effect_guid == GUID_Spring ||
+			*effect_guid == GUID_Damper ||
+			*effect_guid == GUID_Inertia ||
+			*effect_guid == GUID_Friction
+		){
+			DICONDITION *base_pointer = (DICONDITION *)params->lpvTypeSpecificParams;
+			int num_item = params->cbTypeSpecificParams / sizeof(DICONDITION);
+			for(int i = 0;i < num_item; i++){
 				LOG_IF_LOG_EFFECTS(
+					"item #%d:\n"
 					"offset: %d\n"
 					"positive coefficient: %d\n"
 					"negative coefficient: %d\n"
 					"positive saturation: %d\n"
 					"negative saturation: %d\n"
 					"dead band: %d\n",
+					i,
 					base_pointer[i].lOffset,
 					base_pointer[i].lPositiveCoefficient,
 					base_pointer[i].lNegativeCoefficient,
@@ -127,32 +128,42 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 					base_pointer[i].lDeadBand
 				)
 			}
+		}
 
-			// periodic effects
-			if(
-				*effect_guid == GUID_Square ||
-				*effect_guid == GUID_Sine ||
-				*effect_guid == GUID_Triangle ||
-				*effect_guid == GUID_SawtoothUp ||
-				*effect_guid == GUID_SawtoothDown
-			){
-				DIPERIODIC *base_pointer = (DIPERIODIC *)params->lpvTypeSpecificParams;
+		// periodic effects
+		if(
+			*effect_guid == GUID_Square ||
+			*effect_guid == GUID_Sine ||
+			*effect_guid == GUID_Triangle ||
+			*effect_guid == GUID_SawtoothUp ||
+			*effect_guid == GUID_SawtoothDown
+		){
+			DIPERIODIC *base_pointer = (DIPERIODIC *)params->lpvTypeSpecificParams;
+			int num_item = params->cbTypeSpecificParams / sizeof(DIPERIODIC);
+			for(int i = 0;i < num_item; i++){
 				LOG_IF_LOG_EFFECTS(
+					"item #%d:\n"
 					"magnitude: %d\n"
 					"offset: %d\n"
 					"phase: %d\n"
 					"period: %d\n",
+					i,
 					base_pointer[i].dwMagnitude,
 					base_pointer[i].lOffset,
 					base_pointer[i].dwPhase,
 					base_pointer[i].dwPeriod
 				);
 			}
+		}
 
-			if(*effect_guid == GUID_CustomForce){
-				DICUSTOMFORCE *base_pointer = (DICUSTOMFORCE *)params->lpvTypeSpecificParams;
+		if(*effect_guid == GUID_CustomForce){
+			DICUSTOMFORCE *base_pointer = (DICUSTOMFORCE *)params->lpvTypeSpecificParams;
+			int num_item = params->cbTypeSpecificParams / sizeof(DICUSTOMFORCE);
+			for(int i = 0;i < num_item; i++){
 				LOG_IF_LOG_EFFECTS(
+					"item #%d\n"
 					"sample period: %d\n",
+					i,
 					base_pointer[i].dwSamplePeriod
 				);
 				LOG_IF_LOG_EFFECTS("force:\n")
@@ -164,23 +175,35 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 					LOG_IF_LOG_EFFECTS("\n");
 				}
 			}
+		}
 
-			if(*effect_guid == GUID_ConstantForce){
-				DICONSTANTFORCE *base_pointer = (DICONSTANTFORCE *)params->lpvTypeSpecificParams;
-				LOG_IF_LOG_EFFECTS("magnitude: %d\n", base_pointer[i].lMagnitude);
-			}
-
-			if(*effect_guid == GUID_RampForce){
-				DIRAMPFORCE *base_pointer = (DIRAMPFORCE *)params->lpvTypeSpecificParams;
+		if(*effect_guid == GUID_ConstantForce){
+			DICONSTANTFORCE *base_pointer = (DICONSTANTFORCE *)params->lpvTypeSpecificParams;
+			int num_item = params->cbTypeSpecificParams / sizeof(DICONSTANTFORCE);
+			for(int i = 0;i < num_item;i++){
 				LOG_IF_LOG_EFFECTS(
+					"item #%d\n"
+					"magnitude: %d\n",
+					i,
+					base_pointer[i].lMagnitude
+				);
+			}
+		}
+
+		if(*effect_guid == GUID_RampForce){
+			DIRAMPFORCE *base_pointer = (DIRAMPFORCE *)params->lpvTypeSpecificParams;
+			int num_item = params->cbTypeSpecificParams / sizeof(DIRAMPFORCE);
+			for(int i = 0;i < num_item;i++){
+				LOG_IF_LOG_EFFECTS(
+					"item #%d\n"
 					"start: %d\n"
 					"end: %d\n",
+					i,
 					base_pointer[i].lStart,
 					base_pointer[i].lEnd
 				);
 			}
 		}
-
 	}
 }
 
