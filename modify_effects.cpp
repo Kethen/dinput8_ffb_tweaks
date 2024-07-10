@@ -75,7 +75,7 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 			"attack time: %d\n"
 			"fade level: %d\n"
 			"fade time: %d\n"
-			"end envelope",
+			"end envelope\n",
 			params->lpEnvelope->dwAttackLevel,
 			params->lpEnvelope->dwAttackTime,
 			params->lpEnvelope->dwFadeLevel,
