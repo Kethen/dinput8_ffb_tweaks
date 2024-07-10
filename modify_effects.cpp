@@ -30,14 +30,16 @@ static const char *get_effect_string(LPGUID effect_guid){
 }
 
 #define LOG_IF_LOG_EFFECTS(...){ \
-	if(current_config.log_effects){ \
+	if(should_log){ \
 		LOG(__VA_ARGS__); \
 	}else{ \
 		LOG_VERBOSE(__VA_ARGS__); \
 	} \
 }
 
-static void modify_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items){
+extern "C" {
+
+void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bool should_log){
 	LOG_IF_LOG_EFFECTS(
 		"effect %s, %s, %s, %s\n",
 		get_effect_string(effect_guid),
@@ -182,12 +184,19 @@ static void modify_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified
 	}
 }
 
+static void modify_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items){
+	log_effect(effect_guid, params, modified_items, current_config.log_effects);
+}
+
+
 static void __attribute__((stdcall))set_param_cb(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items){
+	bool should_log = current_config.log_effects;
 	LOG_IF_LOG_EFFECTS("modifying effect from set callback\n");
 	modify_effect(effect_guid, params, modified_items);
 }
 
 static void __attribute__((stdcall))create_effect_cb(LPGUID effect_guid, LPDIEFFECT params){
+	bool should_log = current_config.log_effects;
 	LOG_IF_LOG_EFFECTS("modifying effects from create callback\n");
 	DWORD modified_items = DIEP_ALLPARAMS;
 	modify_effect(effect_guid, params, &modified_items);
@@ -196,4 +205,6 @@ static void __attribute__((stdcall))create_effect_cb(LPGUID effect_guid, LPDIEFF
 void bind_effect_modifier_to_hook(){
 	set_set_param_cb(set_param_cb);
 	set_create_effect_cb(create_effect_cb);
+}
+
 }

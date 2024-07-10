@@ -30,7 +30,7 @@ int write_data_to_fd(int fd, const char *buffer, int len);
 	pthread_mutex_unlock(&_log_mutex); \
 }
 
-#if 1
+#if 0
 #define LOG_VERBOSE(...) LOG(__VA_ARGS__)
 #else
 #define LOG_VERBOSE(...)

@@ -17,6 +17,15 @@
 
 #include "logging.h"
 
+static int init_mh(){
+	int ret = MH_Initialize();
+	if(ret != MH_OK && ret != MH_ERROR_ALREADY_INITIALIZED){
+		LOG("Failed initializing MinHook, %d\n", ret);
+		return -1;
+	}
+	return 0;
+}
+
 bool guid_equal(const void *lhs, const void *rhs){
 	return memcmp(lhs, rhs, sizeof(GUID)) == 0;
 }
@@ -76,6 +85,10 @@ HRESULT __attribute__((stdcall)) DownloadW_patched(LPDIRECTINPUTEFFECT object){
 }
 
 int hook_download_set_A(LPDIRECTINPUTEFFECT ppdeff){
+	if(init_mh() != 0){
+		return -1;
+	}
+
 	int mhret = MH_CreateHook(ppdeff->lpVtbl->Download, (LPVOID)&DownloadA_patched, (LPVOID *)&DownloadA_orig);
 	if(mhret != MH_OK){
 		LOG("Failed creating hook for DownloadA, %d\n", mhret);
@@ -104,6 +117,10 @@ int hook_download_set_A(LPDIRECTINPUTEFFECT ppdeff){
 }
 
 int hook_download_set_W(LPDIRECTINPUTEFFECT ppdeff){
+	if(init_mh() != 0){
+		return -1;
+	}
+
 	int mhret = MH_CreateHook(ppdeff->lpVtbl->Download, (LPVOID)&DownloadW_patched, (LPVOID *)&DownloadW_orig);
 	if(mhret != MH_OK){
 		LOG("Failed creating hook for DownloadW, %d\n", mhret);
@@ -175,6 +192,10 @@ HRESULT __attribute__((stdcall)) CreateEffectW_patched(LPDIRECTINPUTDEVICE8W obj
 }
 
 int hook_create_effect_A(LPDIRECTINPUTDEVICE8A lplpDirectInputDevice){
+	if(init_mh() != 0){
+		return -1;
+	}
+
 	int mhret = MH_CreateHook(lplpDirectInputDevice->lpVtbl->CreateEffect, (LPVOID)&CreateEffectA_patched, (LPVOID *)&CreateEffectA_orig);
 	if(mhret != MH_OK){
 		LOG("Failed creating hook for CreateEffectA, %d\n", mhret);
@@ -190,6 +211,10 @@ int hook_create_effect_A(LPDIRECTINPUTDEVICE8A lplpDirectInputDevice){
 }
 
 int hook_create_effect_W(LPDIRECTINPUTDEVICE8W lplpDirectInputDevice){
+	if(init_mh() != 0){
+		return -1;
+	}
+
 	int mhret = MH_CreateHook(lplpDirectInputDevice->lpVtbl->CreateEffect, (LPVOID)&CreateEffectW_patched, (LPVOID *)&CreateEffectW_orig);
 	if(mhret != MH_OK){
 		LOG("Failed creating hook for CreateEffectW, %d\n", mhret);
@@ -233,6 +258,10 @@ HRESULT __attribute__((stdcall)) CreateDeviceW_patched(LPDIRECTINPUT8W object, R
 }
 
 int hook_create_device_A(LPDIRECTINPUT8A dinput8_interface_A){
+	if(init_mh() != 0){
+		return -1;
+	}
+
 	int mhret = MH_CreateHook(dinput8_interface_A->lpVtbl->CreateDevice, (LPVOID)&CreateDeviceA_patched, (LPVOID *)&CreateDeviceA_orig);
 	if(mhret != MH_OK){
 		LOG("Failed creating hook for CreateDeviceA, %d\n", mhret);
@@ -248,6 +277,10 @@ int hook_create_device_A(LPDIRECTINPUT8A dinput8_interface_A){
 }
 
 int hook_create_device_W(LPDIRECTINPUT8W dinput8_interface_W){
+	if(init_mh() != 0){
+		return -1;
+	}
+
 	int mhret = MH_CreateHook(dinput8_interface_W->lpVtbl->CreateDevice, (LPVOID)&CreateDeviceW_patched, (LPVOID *)&CreateDeviceW_orig);
 	if(mhret != MH_OK){
 		LOG("Failed creating hook for CreateDeviceW, %d\n", mhret);
@@ -300,9 +333,7 @@ HMODULE get_dinput8_handle(){
 }
 
 int hook_dinput8create(){
-	int ret = MH_Initialize();
-	if(ret != MH_OK && ret != MH_ERROR_ALREADY_INITIALIZED){
-		LOG("Failed initializing MinHook, %d\n", ret);
+	if(init_mh() != 0){
 		return -1;
 	}
 
@@ -313,7 +344,7 @@ int hook_dinput8create(){
 
 	void *DirectInput8Create_ref = GetProcAddress(dinput8_lib_handle, "DirectInput8Create");
 
-	ret = MH_CreateHook(DirectInput8Create_ref, (LPVOID)&DirectInput8Create_patched, (LPVOID *)&DirectInput8Create_orig);
+	int ret = MH_CreateHook(DirectInput8Create_ref, (LPVOID)&DirectInput8Create_patched, (LPVOID *)&DirectInput8Create_orig);
 	if(ret != MH_OK){
 		LOG("Failed creating hook for DirectInput8Create, %d\n", ret);
 		return -1;
