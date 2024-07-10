@@ -22,6 +22,7 @@
 #include "hooking.h"
 #include "logging.h"
 #include "config.h"
+#include "modify_effects.h"
 
 void patch_memory(void *location, void *buffer, int len){
 	DWORD orig_protect;
@@ -48,6 +49,9 @@ int init(){
 	init_config();
 	parse_config(true);
 	LOG("done parsing initial config\n");
+
+	bind_effect_modifier_to_hook();
+	LOG("done binding effect modifier to hooks\n");
 
 	hook_dinput8create();
 	LOG("done hooking DirectInput8Create\n");

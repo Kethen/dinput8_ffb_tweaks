@@ -16,7 +16,6 @@
 #include <unistd.h>
 
 #include "logging.h"
-#include "modify_effects.h"
 
 bool guid_equal(const void *lhs, const void *rhs){
 	return memcmp(lhs, rhs, sizeof(GUID)) == 0;
@@ -28,10 +27,17 @@ bool guid_equal(const void *lhs, const void *rhs){
 // step 4, on CreateEffect, hook Download
 // step 5, on Download, fire hook over at cpp bits with access to config
 
+static void (__attribute__((stdcall)) *set_param_cb)(LPGUID effect_guid, LPDIEFFECT params, DWORD *dwFlags) = NULL;
+void set_set_param_cb(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params, DWORD *dwFlags)){
+	set_param_cb = cb;
+}
+
 void common_set_hook(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD *dwFlags){
 	GUID effect;
 	object->lpVtbl->GetEffectGuid(object, &effect);
-	modify_effects(&effect, peff, dwFlags, false);
+	if(set_param_cb != NULL){
+		set_param_cb(&effect, peff, dwFlags);
+	}
 }
 
 HRESULT (__attribute__((stdcall)) *SetParametersA_orig)(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags) = NULL;
@@ -50,18 +56,7 @@ HRESULT __attribute__((stdcall)) SetParametersW_patched(LPDIRECTINPUTEFFECT obje
 
 void common_download_hook(LPDIRECTINPUTEFFECT object){
 	return;
-	// undecided, some flags could make doing it here funky, might remove
-	GUID effect;
-	DIEFFECT params;
-	DWORD modified_items = DIEP_ALLPARAMS;
-	object->lpVtbl->GetEffectGuid(object, &effect);
-	object->lpVtbl->GetParameters(object, &params, DIEP_ALLPARAMS);
-	modify_effects(&effect, &params, &modified_items, true);
-	if(SetParametersA_orig != NULL){
-		SetParametersA_orig(object, &params, modified_items | DIEP_NODOWNLOAD);
-	}else{
-		SetParametersW_orig(object, &params, modified_items | DIEP_NODOWNLOAD);
-	}
+	// undecided, some flags could make doing it here funky, might remove the hook
 }
 
 HRESULT (__attribute__((stdcall)) *DownloadA_orig)(LPDIRECTINPUTEFFECT object);
@@ -136,9 +131,19 @@ int hook_download_set_W(LPDIRECTINPUTEFFECT ppdeff){
 	return 0;
 }
 
-HRESULT (__attribute__((stdcall)) *CreateEffectA_orig)(LPDIRECTINPUTDEVICE8A object, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
-HRESULT __attribute__((stdcall)) CreateEffectA_patched(LPDIRECTINPUTDEVICE8A object, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter){
+static void (__attribute__((stdcall)) *create_effect_cb)(LPGUID effect_guid, LPDIEFFECT params) = NULL;
+void set_create_effect_cb(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params)){
+	create_effect_cb = cb;
+}
+
+HRESULT (__attribute__((stdcall)) *CreateEffectA_orig)(LPDIRECTINPUTDEVICE8A object, LPGUID rguid, LPDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+HRESULT __attribute__((stdcall)) CreateEffectA_patched(LPDIRECTINPUTDEVICE8A object, LPGUID rguid, LPDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter){
 	LOG_VERBOSE("%s: object 0x%08x, rguid 0x%08x\n", __func__, object, rguid);
+
+	if(create_effect_cb != NULL && lpeff != NULL){
+		create_effect_cb(rguid, lpeff);
+	}
+
 	HRESULT ret = CreateEffectA_orig(object, rguid, lpeff, ppdeff, punkOuter);
 	static bool hooked = false;
 	if(hooked){
@@ -150,9 +155,14 @@ HRESULT __attribute__((stdcall)) CreateEffectA_patched(LPDIRECTINPUTDEVICE8A obj
 	return ret;
 }
 
-HRESULT (__attribute__((stdcall)) *CreateEffectW_orig)(LPDIRECTINPUTDEVICE8W object, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
-HRESULT __attribute__((stdcall)) CreateEffectW_patched(LPDIRECTINPUTDEVICE8W object, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter){
+HRESULT (__attribute__((stdcall)) *CreateEffectW_orig)(LPDIRECTINPUTDEVICE8W object, LPGUID rguid, LPDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+HRESULT __attribute__((stdcall)) CreateEffectW_patched(LPDIRECTINPUTDEVICE8W object, LPGUID rguid, LPDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter){
 	LOG_VERBOSE("%s: object 0x%08x, rguid 0x%08x\n", __func__, object, rguid);
+
+	if(create_effect_cb != NULL && lpeff != NULL){
+		create_effect_cb(rguid, lpeff);
+	}
+
 	HRESULT ret = CreateEffectW_orig(object, rguid, lpeff, ppdeff, punkOuter);
 	static bool hooked = false;
 	if(hooked){

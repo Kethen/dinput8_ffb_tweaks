@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <pthread.h>
 #include <unistd.h>
+#include "modify_effects.h"
 
 // XXX probably needs more functions implemented for this to be loaded correctly
 
@@ -31,6 +32,8 @@ HRESULT WINAPI DirectInput8Create(HINSTANCE instance, DWORD version, REFIID vari
 		pthread_t config_reparse_thread;
 		pthread_create(&config_reparse_thread, NULL, config_parser_loop, NULL);
 	}
+
+	bind_effect_modifier_to_hook();
 
 	HMODULE dinput8_lib_handle = get_dinput8_handle();
 	if(dinput8_lib_handle == NULL){

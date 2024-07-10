@@ -9,6 +9,8 @@ extern "C" {
 #include <dinput.h>
 #include <stdbool.h>
 
+void set_set_param_cb(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params, DWORD *dwFlags));
+void set_create_effect_cb(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params));
 bool guid_equal(const void *lhs, const void *rhs);
 int hook_dinput8create();
 int hook_create_device_A(LPDIRECTINPUT8A dinput8_interface_A);
