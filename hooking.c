@@ -148,6 +148,31 @@ int hook_download_set_W(LPDIRECTINPUTEFFECT ppdeff){
 	return 0;
 }
 
+static void (__attribute__((stdcall)) *set_device_property_cb)(LPGUID prop_guid, LPDIPROPHEADER propheader) = NULL;
+void set_set_device_property_cb(void (__attribute__((stdcall)) *cb)(LPGUID prop_guid, LPDIPROPHEADER propheader)){
+	set_device_property_cb = cb;
+}
+
+HRESULT (__attribute__((stdcall)) *SetPropertyA_orig)(LPDIRECTINPUTDEVICE8A object, LPGUID rguidProp, LPDIPROPHEADER pdiph);
+HRESULT __attribute__((stdcall)) SetPropertyA_patched(LPDIRECTINPUTDEVICE8A object, LPGUID rguidProp, LPDIPROPHEADER pdiph){
+	LOG_VERBOSE("%s: object 0x%08x, rguidProp 0x%08x, pdiph 0x%08x\n", __func__, object, rguidProp, pdiph);
+	if(set_device_property_cb != NULL){
+		set_device_property_cb(rguidProp, pdiph);
+	}
+
+	return SetPropertyA_orig(object, rguidProp, pdiph);
+}
+
+HRESULT (__attribute__((stdcall)) *SetPropertyW_orig)(LPDIRECTINPUTDEVICE8W object, LPGUID rguidProp, LPDIPROPHEADER pdiph);
+HRESULT __attribute__((stdcall)) SetPropertyW_patched(LPDIRECTINPUTDEVICE8W object, LPGUID rguidProp, LPDIPROPHEADER pdiph){
+	LOG_VERBOSE("%s: object 0x%08x, rguidProp 0x%08x, pdiph 0x%08x\n", __func__, object, rguidProp, pdiph);
+	if(set_device_property_cb != NULL){
+		set_device_property_cb(rguidProp, pdiph);
+	}
+
+	return SetPropertyW_orig(object, rguidProp, pdiph);
+}
+
 static void (__attribute__((stdcall)) *create_effect_cb)(LPGUID effect_guid, LPDIEFFECT params) = NULL;
 void set_create_effect_cb(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid, LPDIEFFECT params)){
 	create_effect_cb = cb;
@@ -207,6 +232,19 @@ int hook_create_effect_A(LPDIRECTINPUTDEVICE8A lplpDirectInputDevice){
 		return -1;
 	}
 	LOG_VERBOSE("hooked CreateEffectA at 0x%08x\n", lplpDirectInputDevice->lpVtbl->CreateEffect);
+
+	mhret = MH_CreateHook(lplpDirectInputDevice->lpVtbl->SetProperty, (LPVOID)&SetPropertyA_patched, (LPVOID *)&SetPropertyA_orig);
+	if(mhret != MH_OK){
+		LOG("Failed creating hook for SetPropertyA, %d\n", mhret);
+		return -1;
+	}
+	mhret = MH_EnableHook(lplpDirectInputDevice->lpVtbl->SetProperty);
+	if(mhret != MH_OK){
+		LOG("Failed enableing hook for SetPropertyA, %d\n", mhret);
+		return -1;
+	}
+	LOG_VERBOSE("hooked SetPropertyA at 0x%08x\n", lplpDirectInputDevice->lpVtbl->SetProperty);
+
 	return 0;
 }
 
@@ -226,6 +264,19 @@ int hook_create_effect_W(LPDIRECTINPUTDEVICE8W lplpDirectInputDevice){
 		return -1;
 	}
 	LOG_VERBOSE("hooked CreateEffectW at 0x%08x\n", lplpDirectInputDevice->lpVtbl->CreateEffect);
+
+	mhret = MH_CreateHook(lplpDirectInputDevice->lpVtbl->SetProperty, (LPVOID)&SetPropertyW_patched, (LPVOID *)&SetPropertyW_orig);
+	if(mhret != MH_OK){
+		LOG("Failed creating hook for SetPropertyW, %d\n", mhret);
+		return -1;
+	}
+	mhret = MH_EnableHook(lplpDirectInputDevice->lpVtbl->SetProperty);
+	if(mhret != MH_OK){
+		LOG("Failed enableing hook for SetPropertyW, %d\n", mhret);
+		return -1;
+	}
+	LOG_VERBOSE("hooked SetPropertyW at 0x%08x\n", lplpDirectInputDevice->lpVtbl->SetProperty);
+
 	return 0;
 }
 

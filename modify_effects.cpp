@@ -29,6 +29,30 @@ static const char *get_effect_string(LPGUID effect_guid){
 	return "UNKNOWN_EFFECT";
 }
 
+static const char *get_device_prop_string(LPGUID prop_guid){
+	#define PROP_STRING(guid) { \
+		if(&DIPROP_##guid == prop_guid){ \
+			return STR(guid); \
+		} \
+	}
+	PROP_STRING(APPDATA);
+	PROP_STRING(AUTOCENTER);
+	PROP_STRING(AXISMODE);
+	PROP_STRING(BUFFERSIZE);
+	PROP_STRING(CALIBRATION);
+	PROP_STRING(CALIBRATIONMODE);
+	PROP_STRING(CPOINTS);
+	PROP_STRING(DEADZONE);
+	PROP_STRING(FFGAIN);
+	PROP_STRING(INSTANCENAME);
+	PROP_STRING(PRODUCTNAME);
+	PROP_STRING(RANGE);
+	PROP_STRING(SATURATION);
+	#undef PROP_STRING
+
+	return "UNKNOWN_DEVICE_PROP";
+}
+
 #define LOG_IF_LOG_EFFECTS(...){ \
 	if(should_log){ \
 		LOG(__VA_ARGS__); \
@@ -38,6 +62,33 @@ static const char *get_effect_string(LPGUID effect_guid){
 }
 
 extern "C" {
+
+void log_device_prop(LPGUID prop_guid, LPDIPROPHEADER propheader, bool should_log){
+	// prop_guid is an enum on a pointer :(
+	LOG_IF_LOG_EFFECTS(
+		"device prop %s:\n",
+		get_device_prop_string(prop_guid)
+	);
+
+	// TODO log more props
+	if(prop_guid == &DIPROP_FFGAIN && propheader != NULL){
+		DIPROPDWORD *prop = (DIPROPDWORD *)propheader;
+		LOG_IF_LOG_EFFECTS("gain: %d\n", prop->dwData);
+		return;
+	}
+
+	if(prop_guid == &DIPROP_AUTOCENTER && propheader != NULL){
+		DIPROPDWORD *prop = (DIPROPDWORD *)propheader;
+		LOG_IF_LOG_EFFECTS("auto center: %d\n", prop->dwData);
+		return;
+	}
+
+	if(prop_guid == &DIPROP_RANGE && propheader != NULL){
+		DIPROPRANGE *prop = (DIPROPRANGE *)propheader;
+		LOG_IF_LOG_EFFECTS("range min, max: %d, %d\n", prop->lMin, prop->lMax);
+		return;
+	}
+}
 
 void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bool should_log){
 	LOG_IF_LOG_EFFECTS(
@@ -211,6 +262,9 @@ static void modify_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified
 	log_effect(effect_guid, params, modified_items, current_config.log_effects);
 }
 
+static void modify_device_prop(LPGUID prop_guid, LPDIPROPHEADER propheader){
+	log_device_prop(prop_guid, propheader, current_config.log_effects);
+}
 
 static void __attribute__((stdcall))set_param_cb(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items){
 	bool should_log = current_config.log_effects;
@@ -225,9 +279,18 @@ static void __attribute__((stdcall))create_effect_cb(LPGUID effect_guid, LPDIEFF
 	modify_effect(effect_guid, params, &modified_items);
 }
 
+static void __attribute__((stdcall))set_device_property_cb(LPGUID prop_guid, LPDIPROPHEADER propheader){
+	bool should_log = current_config.log_effects;
+	LOG_IF_LOG_EFFECTS("modifying device prop from set prop callback\n");
+	modify_device_prop(prop_guid, propheader);
+}
+
+// TODO maybe callback to expose objects, or add that exposure to the above callbacks
+
 void bind_effect_modifier_to_hook(){
 	set_set_param_cb(set_param_cb);
 	set_create_effect_cb(create_effect_cb);
+	set_set_device_property_cb(set_device_property_cb);
 }
 
 }
