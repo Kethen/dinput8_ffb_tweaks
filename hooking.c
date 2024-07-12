@@ -409,3 +409,39 @@ int hook_dinput8create(){
 	//sleep(10);
 	return 0;
 }
+
+int hook_create_device_methods(){
+	HMODULE dinput8 = get_dinput8_handle();
+	if(dinput8 == NULL){
+		LOG("Failed fetching dinput8 handle\n");
+		return -1;
+	}
+	HRESULT (WINAPI *DirectInput8Create_fetched)(HINSTANCE,DWORD,REFIID,LPVOID *,LPUNKNOWN) = (HRESULT (WINAPI *)(HINSTANCE,DWORD,REFIID,LPVOID *,LPUNKNOWN))GetProcAddress(dinput8, "DirectInput8Create");
+
+	// make a dll soup to hook methods becausing hooking DirectInput8Create itself triggers hooking detection on tdu2's physics engine
+
+	// this instance will be a memory leak? how the hek are you supposed to free these
+	LPDIRECTINPUT8A direct_input_8_interface_A;
+	HRESULT res = DirectInput8Create_fetched((HINSTANCE)hook_create_device_methods, 0x0800, &IID_IDirectInput8A, (LPVOID *)&direct_input_8_interface_A, NULL);
+	if(res != DI_OK){
+		LOG("Failed creating dinput8 A interface\n");
+		return -1;
+	}
+	if(hook_create_device_A(direct_input_8_interface_A) != 0){
+		LOG("Failed hooking dinput8 A interface\n");
+		return -1;
+	}
+
+	LPDIRECTINPUT8W direct_input_8_interface_W;
+	res = DirectInput8Create_fetched((HINSTANCE)hook_create_device_methods, 0x0800, &IID_IDirectInput8W, (LPVOID *)&direct_input_8_interface_W, NULL);
+	if(res != DI_OK){
+		LOG("Failed creating dinput8 W interface\n");
+		return -1;
+	}
+	if(hook_create_device_W(direct_input_8_interface_W) != 0){
+		LOG("Failed hooking dinput8 W interface\n");
+		return -1;
+	}
+
+	return 0;
+}

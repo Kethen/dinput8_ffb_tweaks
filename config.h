@@ -19,6 +19,7 @@ struct modifiers {
 struct config{
 	struct modifiers m;
 	bool log_effects;
+	bool method_hooking;
 };
 
 void parse_config(bool update_if_needed);

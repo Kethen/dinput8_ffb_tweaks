@@ -24,6 +24,7 @@ static void log_config(struct config *c){
 		LOG("setting " STR(key) ": %s\n", c->key? "true" : "false");\
 	}
 	PRINT_SETTING_BOOL(log_effects);
+	PRINT_SETTING_BOOL(method_hooking);
 	#undef PRINT_SETTING_BOOL
 
 	#define PRINT_MODIFIER_INT32(key, subkey) { \
@@ -108,6 +109,7 @@ void parse_config(bool update_if_needed){
 		} \
 	}
 	FETCH_SETTING(log_effects, false);
+	FETCH_SETTING(method_hooking, true);
 	#undef FETCH_SETTING
 
 	#define FETCH_MODIFIER(key, subkey, d) { \

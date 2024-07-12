@@ -53,8 +53,13 @@ int init(){
 	bind_effect_modifier_to_hook();
 	LOG("done binding effect modifier to hooks\n");
 
-	hook_dinput8create();
-	LOG("done hooking DirectInput8Create\n");
+	if(current_config.method_hooking){
+		hook_create_device_methods();
+		LOG("done hooking create device methods\n");
+	}else{
+		hook_dinput8create();
+		LOG("done hooking DirectInput8Create\n");
+	}
 
 	pthread_t config_reparse_thread;
 	pthread_create(&config_reparse_thread, NULL, config_parser_loop, NULL);
