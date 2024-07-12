@@ -422,9 +422,13 @@ int hook_create_device_methods(){
 
 	// this instance will be a memory leak? how the hek are you supposed to free these
 	LPDIRECTINPUT8A direct_input_8_interface_A;
-	HRESULT res = DirectInput8Create_fetched((HINSTANCE)hook_create_device_methods, 0x0800, &IID_IDirectInput8A, (LPVOID *)&direct_input_8_interface_A, NULL);
+
+	// while wine dinput8 doesn't seem to care if I send garbo as instance handle here, the win10 implementation cares
+	HINSTANCE instance_handle = GetModuleHandleA(NULL);
+
+	HRESULT res = DirectInput8Create_fetched((HINSTANCE)instance_handle, 0x0800, &IID_IDirectInput8A, (LPVOID *)&direct_input_8_interface_A, NULL);
 	if(res != DI_OK){
-		LOG("Failed creating dinput8 A interface\n");
+		LOG("Failed creating dinput8 A interface, 0x%08x\n", res);
 		return -1;
 	}
 	if(hook_create_device_A(direct_input_8_interface_A) != 0){
@@ -433,9 +437,9 @@ int hook_create_device_methods(){
 	}
 
 	LPDIRECTINPUT8W direct_input_8_interface_W;
-	res = DirectInput8Create_fetched((HINSTANCE)hook_create_device_methods, 0x0800, &IID_IDirectInput8W, (LPVOID *)&direct_input_8_interface_W, NULL);
+	res = DirectInput8Create_fetched((HINSTANCE)instance_handle, 0x0800, &IID_IDirectInput8W, (LPVOID *)&direct_input_8_interface_W, NULL);
 	if(res != DI_OK){
-		LOG("Failed creating dinput8 W interface\n");
+		LOG("Failed creating dinput8 W interface, 0x%08x\n", res);
 		return -1;
 	}
 	if(hook_create_device_W(direct_input_8_interface_W) != 0){
