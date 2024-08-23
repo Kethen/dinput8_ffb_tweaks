@@ -1,7 +1,7 @@
 set -xe
 
-#for arch in x86_64 i686
-for arch in i686
+for arch in x86_64 i686
+#for arch in i686
 do
 	OUT_DIR=dist/${arch}
 	rm -rf $OUT_DIR
@@ -13,6 +13,12 @@ do
 		min_hook_lib="MinHook.x64"
 	fi
 	cp minhook_1.3.3/bin/${min_hook_lib}.dll $OUT_DIR
+
+	asi_loader_path=ultimate_asi_loader/x86/dinput8.dll
+	if [ ${arch} == x86_64 ]
+	then
+		asi_loader_path=ultimate_asi_loader/x64/dinput8.dll
+	fi
 
 	CC=${arch}-w64-mingw32-gcc
 	CPPC=${arch}-w64-mingw32-g++
@@ -31,6 +37,6 @@ do
 	rm $OUT_DIR/*.o
 
 	cp dinput8_ffb_tweaks_config.json $OUT_DIR/
-	cp ultimate_asi_loader/dinput8.dll $OUT_DIR/d3d9.dll
+	cp $asi_loader_path $OUT_DIR/d3d9.dll
 done
 
