@@ -49,6 +49,7 @@ void common_set_hook(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD *dwFlags
 	}
 }
 
+// only the SetParametersW hook is used now, there should not be a difference
 HRESULT (__attribute__((stdcall)) *SetParametersA_orig)(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags) = NULL;
 HRESULT __attribute__((stdcall)) SetParametersA_patched(LPDIRECTINPUTEFFECT object, LPDIEFFECT peff, DWORD dwFlags){
 	LOG_VERBOSE("%s: object 0x%08x\n", __func__, object);
@@ -68,6 +69,7 @@ void common_download_hook(LPDIRECTINPUTEFFECT object){
 	// undecided, some flags could make doing it here funky, might remove the hook
 }
 
+// only the DownloadW hook is used now, there should not be a difference
 HRESULT (__attribute__((stdcall)) *DownloadA_orig)(LPDIRECTINPUTEFFECT object);
 HRESULT __attribute__((stdcall)) DownloadA_patched(LPDIRECTINPUTEFFECT object){
 	//LOG_VERBOSE("%s: object 0x%08x\n", __func__, object);
@@ -178,6 +180,8 @@ void set_create_effect_cb(void (__attribute__((stdcall)) *cb)(LPGUID effect_guid
 	create_effect_cb = cb;
 }
 
+bool download_hooked = false;
+
 HRESULT (__attribute__((stdcall)) *CreateEffectA_orig)(LPDIRECTINPUTDEVICE8A object, LPGUID rguid, LPDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
 HRESULT __attribute__((stdcall)) CreateEffectA_patched(LPDIRECTINPUTDEVICE8A object, LPGUID rguid, LPDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter){
 	LOG_VERBOSE("%s: object 0x%08x, rguid 0x%08x\n", __func__, object, rguid);
@@ -187,12 +191,11 @@ HRESULT __attribute__((stdcall)) CreateEffectA_patched(LPDIRECTINPUTDEVICE8A obj
 	}
 
 	HRESULT ret = CreateEffectA_orig(object, rguid, lpeff, ppdeff, punkOuter);
-	static bool hooked = false;
-	if(hooked){
+	if(download_hooked){
 		return ret;
 	}
 	if(ret == DI_OK){
-		hooked = hook_download_set_A(*ppdeff) == 0;
+		download_hooked = hook_download_set_W(*ppdeff) == 0;
 	}
 	return ret;
 }
@@ -206,12 +209,11 @@ HRESULT __attribute__((stdcall)) CreateEffectW_patched(LPDIRECTINPUTDEVICE8W obj
 	}
 
 	HRESULT ret = CreateEffectW_orig(object, rguid, lpeff, ppdeff, punkOuter);
-	static bool hooked = false;
-	if(hooked){
+	if(download_hooked){
 		return ret;
 	}
 	if(ret == DI_OK){
-		hooked = hook_download_set_W(*ppdeff) == 0;
+		download_hooked = hook_download_set_W(*ppdeff) == 0;
 	}
 	return ret;
 }
