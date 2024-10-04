@@ -30,9 +30,9 @@ do
 	$CPPC -g -fPIC -c modify_effects.cpp -o $OUT_DIR/modify_effects.o
 
 	obj_list="$OUT_DIR/logging.o $OUT_DIR/hooking.o $OUT_DIR/config.o $OUT_DIR/modify_effects.o"
-	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.asi $obj_list $OUT_DIR/asi_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
-	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.dll $obj_list -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
-	#$CPPC -g -shared -o $OUT_DIR/dinput8.dll $obj_list $OUT_DIR/wrapper_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc -static-libstdc++
+	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.asi $obj_list $OUT_DIR/asi_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc
+	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.dll $obj_list -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc
+	#$CPPC -g -shared -o $OUT_DIR/dinput8.dll $obj_list $OUT_DIR/wrapper_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc
 
 	rm $OUT_DIR/*.o
 
