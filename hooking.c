@@ -430,7 +430,7 @@ int hook_create_device_methods(){
 
 	HRESULT res = DirectInput8Create_fetched((HINSTANCE)instance_handle, 0x0800, &IID_IDirectInput8A, (LPVOID *)&direct_input_8_interface_A, NULL);
 	if(res != DI_OK){
-		LOG("Failed creating dinput8 A interface, 0x%08x\n", res);
+		LOG("Failed creating dinput8 A interface, 0x%08lx\n", res);
 		return -1;
 	}
 	if(hook_create_device_A(direct_input_8_interface_A) != 0){
@@ -441,7 +441,7 @@ int hook_create_device_methods(){
 	LPDIRECTINPUT8W direct_input_8_interface_W;
 	res = DirectInput8Create_fetched((HINSTANCE)instance_handle, 0x0800, &IID_IDirectInput8W, (LPVOID *)&direct_input_8_interface_W, NULL);
 	if(res != DI_OK){
-		LOG("Failed creating dinput8 W interface, 0x%08x\n", res);
+		LOG("Failed creating dinput8 W interface, 0x%08lx\n", res);
 		return -1;
 	}
 	if(hook_create_device_W(direct_input_8_interface_W) != 0){
