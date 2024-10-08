@@ -20,18 +20,22 @@ do
 		asi_loader_path=ultimate_asi_loader/x64/dinput8.dll
 	fi
 
-	CC=${arch}-w64-mingw32-gcc
-	CPPC=${arch}-w64-mingw32-g++
-	$CPPC -g -fPIC -c asi_mode.cpp -std=c++20 -o $OUT_DIR/asi_mode.o
-	$CPPC -g -fPIC -c wrapper_mode.cpp -std=c++20 -o $OUT_DIR/wrapper_mode.o
+	CSTD="-std=c11"
+	CPPSTD="-std=c++11"
+	CPPC="${arch}-w64-mingw32-clang++ $CPPSTD -stdlib=libc++"
+	CC="${arch}-w64-mingw32-clang $CSTD"
+	LINKER="${arch}-w64-mingw32-clang++ -stdlib=libc++"
+
+	$CPPC -g -fPIC -c asi_mode.cpp -o $OUT_DIR/asi_mode.o
+	$CPPC -g -fPIC -c wrapper_mode.cpp -o $OUT_DIR/wrapper_mode.o
 	$CC -g -fPIC -c logging.c -o $OUT_DIR/logging.o
 	$CC -g -fPIC -c hooking.c -Iminhook_1.3.3/include -o $OUT_DIR/hooking.o -O0
 	$CPPC -g -fPIC -c config.cpp -Ijson_hpp -o $OUT_DIR/config.o
 	$CPPC -g -fPIC -c modify_effects.cpp -o $OUT_DIR/modify_effects.o
 
 	obj_list="$OUT_DIR/logging.o $OUT_DIR/hooking.o $OUT_DIR/config.o $OUT_DIR/modify_effects.o"
-	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.asi $obj_list $OUT_DIR/asi_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc
-	$CPPC -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.dll $obj_list -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc
+	$LINKER -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.asi $obj_list $OUT_DIR/asi_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -Wl,-Bstatic -lc++ -l${min_hook_lib} -static-libgcc
+	$LINKER -g -shared -o $OUT_DIR/dinput8_ffb_tweaks_${arch}.dll $obj_list -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -Wl,-Bstatic -lc++ -l${min_hook_lib} -static-libgcc
 	#$CPPC -g -shared -o $OUT_DIR/dinput8.dll $obj_list $OUT_DIR/wrapper_mode.o -Lminhook_1.3.3/bin -lntdll -lkernel32 -ldxguid -Wl,-Bstatic -lpthread -l${min_hook_lib} -static-libgcc
 
 	rm $OUT_DIR/*.o

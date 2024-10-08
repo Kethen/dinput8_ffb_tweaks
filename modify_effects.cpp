@@ -73,19 +73,19 @@ void log_device_prop(LPGUID prop_guid, LPDIPROPHEADER propheader, bool should_lo
 	// TODO log more props
 	if(prop_guid == &DIPROP_FFGAIN && propheader != NULL){
 		DIPROPDWORD *prop = (DIPROPDWORD *)propheader;
-		LOG_IF_LOG_EFFECTS("gain: %d\n", prop->dwData);
+		LOG_IF_LOG_EFFECTS("gain: %ld\n", prop->dwData);
 		return;
 	}
 
 	if(prop_guid == &DIPROP_AUTOCENTER && propheader != NULL){
 		DIPROPDWORD *prop = (DIPROPDWORD *)propheader;
-		LOG_IF_LOG_EFFECTS("auto center: %d\n", prop->dwData);
+		LOG_IF_LOG_EFFECTS("auto center: %ld\n", prop->dwData);
 		return;
 	}
 
 	if(prop_guid == &DIPROP_RANGE && propheader != NULL){
 		DIPROPRANGE *prop = (DIPROPRANGE *)propheader;
-		LOG_IF_LOG_EFFECTS("range min, max: %d, %d\n", prop->lMin, prop->lMax);
+		LOG_IF_LOG_EFFECTS("range min, max: %ld, %ld\n", prop->lMin, prop->lMax);
 		return;
 	}
 }
@@ -101,7 +101,7 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 	if(*modified_items & DIEP_AXES && params->rgdwAxes != NULL){
 		LOG_IF_LOG_EFFECTS("axes ids: ");
 		for(int i = 0;i < params->cAxes; i++){
-			LOG_IF_LOG_EFFECTS("0x%08x ", params->rgdwAxes[i]);
+			LOG_IF_LOG_EFFECTS("0x%08lx ", params->rgdwAxes[i]);
 		}
 		LOG_IF_LOG_EFFECTS("\n");
 	}
@@ -112,20 +112,20 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 			params->dwFlags & DIEFF_SPHERICAL? "DIEFF_SPHERICAL": "");
 		LOG_IF_LOG_EFFECTS("directions: ");
 		for(int i = 0;i < params->cAxes; i++){
-			LOG_IF_LOG_EFFECTS("%d ", params->rglDirection[i]);
+			LOG_IF_LOG_EFFECTS("%ld ", params->rglDirection[i]);
 		}
 		LOG_IF_LOG_EFFECTS("\n");
 	}
 	if(*modified_items & DIEP_DURATION){
-		LOG_IF_LOG_EFFECTS("duration: %d\n", params->dwDuration);
+		LOG_IF_LOG_EFFECTS("duration: %lu\n", params->dwDuration);
 	}
 	if(*modified_items & DIEP_ENVELOPE && params->lpEnvelope != NULL){
 		LOG_IF_LOG_EFFECTS(
 			"envelope:\n"
-			"attack level: %d\n"
-			"attack time: %d\n"
-			"fade level: %d\n"
-			"fade time: %d\n"
+			"attack level: %lu\n"
+			"attack time: %lu\n"
+			"fade level: %lu\n"
+			"fade time: %lu\n"
 			"end envelope\n",
 			params->lpEnvelope->dwAttackLevel,
 			params->lpEnvelope->dwAttackTime,
@@ -134,20 +134,20 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 		);
 	}
 	if(*modified_items & DIEP_GAIN){
-		LOG_IF_LOG_EFFECTS("gain: %d\n", params->dwGain);
+		LOG_IF_LOG_EFFECTS("gain: %lu\n", params->dwGain);
 	}
 	if(*modified_items & DIEP_SAMPLEPERIOD){
-		LOG_IF_LOG_EFFECTS("sample period: %d\n", params->dwSamplePeriod);
+		LOG_IF_LOG_EFFECTS("sample period: %lu\n", params->dwSamplePeriod);
 	}
 	if(*modified_items & DIEP_STARTDELAY){
-		LOG_IF_LOG_EFFECTS("start delay: %d\n", params->dwStartDelay);
+		LOG_IF_LOG_EFFECTS("start delay: %lu\n", params->dwStartDelay);
 	}
 	if(*modified_items & DIEP_TRIGGERBUTTON){
 		LOG_IF_LOG_EFFECTS("trigger button format: %s\n", params->dwFlags & DIEFF_OBJECTIDS? "DIEFF_OBJECTIDS?": "DIEFF_OBJECTOFFSETS");
 		if(params->dwTriggerButton == DIEB_NOTRIGGER){
 			LOG_IF_LOG_EFFECTS("trigger button: none\n");
 		}else{
-			LOG_IF_LOG_EFFECTS("trigger button: 0x%08x\n", params->dwTriggerButton);
+			LOG_IF_LOG_EFFECTS("trigger button: 0x%08lx\n", params->dwTriggerButton);
 		}
 	}
 
@@ -164,12 +164,12 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 			for(int i = 0;i < num_item; i++){
 				LOG_IF_LOG_EFFECTS(
 					"item #%d:\n"
-					"offset: %d\n"
-					"positive coefficient: %d\n"
-					"negative coefficient: %d\n"
-					"positive saturation: %d\n"
-					"negative saturation: %d\n"
-					"dead band: %d\n",
+					"offset: %ld\n"
+					"positive coefficient: %ld\n"
+					"negative coefficient: %ld\n"
+					"positive saturation: %lu\n"
+					"negative saturation: %lu\n"
+					"dead band: %ld\n",
 					i,
 					base_pointer[i].lOffset,
 					base_pointer[i].lPositiveCoefficient,
@@ -194,10 +194,10 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 			for(int i = 0;i < num_item; i++){
 				LOG_IF_LOG_EFFECTS(
 					"item #%d:\n"
-					"magnitude: %d\n"
-					"offset: %d\n"
-					"phase: %d\n"
-					"period: %d\n",
+					"magnitude: %lu\n"
+					"offset: %ld\n"
+					"phase: %lu\n"
+					"period: %lu\n",
 					i,
 					base_pointer[i].dwMagnitude,
 					base_pointer[i].lOffset,
@@ -213,7 +213,7 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 			for(int i = 0;i < num_item; i++){
 				LOG_IF_LOG_EFFECTS(
 					"item #%d\n"
-					"sample period: %d\n",
+					"sample period: %lu\n",
 					i,
 					base_pointer[i].dwSamplePeriod
 				);
@@ -221,7 +221,7 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 				for(int j = 0;j < base_pointer[i].cSamples;j++){
 					LOG_IF_LOG_EFFECTS("sample #%d: ", j)
 					for(int k = 0;k < base_pointer[i].cChannels;k++){
-						LOG_IF_LOG_EFFECTS("%d ", base_pointer[i].rglForceData[j * base_pointer[i].cChannels + k]);
+						LOG_IF_LOG_EFFECTS("%ld ", base_pointer[i].rglForceData[j * base_pointer[i].cChannels + k]);
 					}
 					LOG_IF_LOG_EFFECTS("\n");
 				}
@@ -234,7 +234,7 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 			for(int i = 0;i < num_item;i++){
 				LOG_IF_LOG_EFFECTS(
 					"item #%d\n"
-					"magnitude: %d\n",
+					"magnitude: %ld\n",
 					i,
 					base_pointer[i].lMagnitude
 				);
@@ -247,8 +247,8 @@ void log_effect(LPGUID effect_guid, LPDIEFFECT params, DWORD *modified_items, bo
 			for(int i = 0;i < num_item;i++){
 				LOG_IF_LOG_EFFECTS(
 					"item #%d\n"
-					"start: %d\n"
-					"end: %d\n",
+					"start: %ld\n"
+					"end: %ld\n",
 					i,
 					base_pointer[i].lStart,
 					base_pointer[i].lEnd

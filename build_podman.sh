@@ -1,9 +1,4 @@
-IMAGE_NAME=dinput8_ffb_tweaks
-
-if ! podman image exists $IMAGE_NAME
-then
-	podman image build -t $IMAGE_NAME -f DockerFile
-fi
+IMAGE_NAME=docker.io/mstorsjo/llvm-mingw:latest
 
 podman run \
 	--rm -it \
